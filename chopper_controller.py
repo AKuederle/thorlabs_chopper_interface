@@ -13,7 +13,7 @@ class RangeError(Exception):
 class CHOPPER(object):
 
     """docstring for CHOPPER"""
-    _freq_range = (1.0, 1000.0)
+    _intfreq_range = (1.0, 1000.0)
     _blade_range = (1.0, 7.0)
     _get_ref = (0.0, 1.0)
 
@@ -49,6 +49,8 @@ class CHOPPER(object):
 
     def set_intfreq(self, value):
         "set the internal frequency"
+        if float(value) < self._intfreq_range[0] or float(value) > self._intfreq_range[1]:
+            raise RangeError("{} is out of range!".format(str(value)))
         command = "freq={}\r".format(str(value))
         self._log_write(command)
         self.ser.write(command)
@@ -66,6 +68,8 @@ class CHOPPER(object):
 
     def set_blade(self, value):
         "set the blade type"
+        if float(value) < self._blade_range[0] or float(value) > self._blade_range[1]:
+            raise RangeError("{} is out of range!".format(str(value)))
         command = "blade={}\r".format(str(value))
         self._log_write(command)
         self.ser.write(command)
@@ -82,6 +86,8 @@ class CHOPPER(object):
         return answer
 
     def set_ref(self, value):
+        if float(value) < self._ref_range[0] or float(value) > self._ref_range[1]:
+            raise RangeError("{} is out of range!".format(str(value)))
         "set the reference mode"
         command = "ref={}\r".format(str(value))
         self._log_write(command)
