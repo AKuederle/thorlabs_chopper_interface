@@ -125,6 +125,7 @@ class CHOPPER(object):
         all_stats.append(self.get_ref())
         all_stats.append(self.get_exfreq())
         all_stats.append(self.get_status())
+        return all_stats
 
     def close(self):
         self.ser.close()
