@@ -13,6 +13,9 @@ class RangeError(Exception):
 class CHOPPER(object):
 
     """docstring for CHOPPER"""
+    _freq_range = (1.0, 1000.0)
+    _blade_range = (1.0, 7.0)
+    _get_ref = (0.0, 1.0)
 
     def __init__(self, port=0, log=False):
         import serial
