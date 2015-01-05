@@ -11,11 +11,14 @@ class RangeError(Exception):
 
 
 class CHOPPER(object):
-
     """docstring for CHOPPER"""
-    _intfreq_range = (1.0, 1000.0)
-    _blade_range = (1.0, 7.0)
-    _get_ref = (0.0, 1.0)
+    from collections import namedtuple
+    _blades = ["MC1F2", "MC1F6", "MC1F10", "MC1F15", "MC1F30", "MC1F60", "MC1F100", "MC1F57"]
+    _control = namedtuple("control", ["intfreq", "blade", "ref"])
+    _state = namedtuple("state", ["status", "intfreq", "exfreq", "blade", "ref"])
+    _query = namedtuple("query", ["status", "intfreq", "exfreq", "blade", "ref", "all"])
+    _bladerange = namedtuple("bladerange", _blades)
+
 
     def __init__(self, port=0, log=False):
         import serial
@@ -31,6 +34,12 @@ class CHOPPER(object):
         self.ser.read(100)
         self.log = log
         self.log_file = []
+        self._Range = self._control(intfreq=(1.0, 1000.0), blade=(0.0, 6.0), ref=(0.0, 1.0))
+        self._Bladerange = self._bladerange(MC1F2=(1.0, 99.0), MC1F6=(0.0, 0.0), MC1F10=(20.0, 1000.0), MC1F15=(30.0, 1500.0), MC1F30=(60.0, 3000.0), MC1F60=(120.0, 6000.0), MC1F100=(0.0, 0.0), MC1F57=(10.0, 500.0))
+        self.Set = self._control(intfreq=self.set_intfreq, blade=self.set_blade, ref=self.set_ref)
+        self.Get = self._query(status=self.get_status, intfreq=self.get_intfreq, exfreq=self.get_exfreq, blade=self.get_blade, ref=self.get_ref, all=self.get_all)
+        self.Stat = self._state(status=None, intfreq=None, exfreq=None, blade=None, ref=None)
+        self.get_all()
 
     def _log_write(self, string):
         if self.log is True:
@@ -45,7 +54,9 @@ class CHOPPER(object):
         self.ser.write(command)
         answer = self.ser.read(50)  # adjust!
         self._log_write(answer)
-        return answer
+        rlvalue = float(answer)
+        self.Stat = self.Stat._replace(intfreq=rlvalue)
+        return rlvalue
 
     def set_intfreq(self, value):
         "set the internal frequency"
@@ -64,13 +75,16 @@ class CHOPPER(object):
         self.ser.write(command)
         answer = self.ser.read(50)  # adjust!
         self._log_write(answer)
-        return answer
+        rlvalue = float(answer)
+        self.Stat = self.Stat._replace(blade=rlvalue)
+        self._Range = self._Range._replace(intfreq=self._Bladerange[int(rlvalue)])
+        return rlvalue
 
-    def set_blade(self, value):
+    def set_blade(self, value, ):
         "set the blade type"
         if float(value) < self._blade_range[0] or float(value) > self._blade_range[1]:
             raise RangeError("{} is out of range!".format(str(value)))
-        command = "blade={}\r".format(str(value))
+        command = "blade={}\r".format(str(int(value)))
         self._log_write(command)
         self.ser.write(command)
         rlvalue = self.get_intfreq()
@@ -83,13 +97,15 @@ class CHOPPER(object):
         self.ser.write(command)
         answer = self.ser.read(50)  # adjust!
         self._log_write(answer)
-        return answer
+        rlvalue = float(answer)
+        self.Stat = self.Stat._replace(ref=rlvalue)
+        return rlvalue
 
     def set_ref(self, value):
         if float(value) < self._ref_range[0] or float(value) > self._ref_range[1]:
             raise RangeError("{} is out of range!".format(str(value)))
         "set the reference mode"
-        command = "ref={}\r".format(str(value))
+        command = "ref={}\r".format(str(int(value)))
         self._log_write(command)
         self.ser.write(command)
         rlvalue = self.get_intfreq()
@@ -101,7 +117,19 @@ class CHOPPER(object):
         self._log_write(command)
         self.ser.write(command)
         answer = self.ser.read(50)
-        return answer
+        rlvalue = float(answer)
+        self.Stat = self.Stat._replace(status=rlvalue)
+        return rlvalue
+
+    def get_exfreq(self):
+        "get current external frequency"
+        command = "input?\r"
+        self._log_write(command)
+        self.ser.write(command)
+        answer = self.ser.read(50)
+        rlvalue = float(answer)
+        self.Stat = self.Stat._replace(exfreq=rlvalue)
+        return rlvalue
 
     def start(self):
         "send start signal"
@@ -119,22 +147,10 @@ class CHOPPER(object):
         rlvalue = self.get_status()
         return rlvalue
 
-    def get_exfreq(self):
-        "get current external frequency"
-        command = "input?\r"
-        self._log_write(command)
-        self.ser.write(command)
-        answer = self.ser.read(50)
-        return answer
-
     def get_all(self):
-        all_stats = []
-        all_stats.append(self.get_intfreq())
-        all_stats.append(self.get_blade())
-        all_stats.append(self.get_ref())
-        all_stats.append(self.get_exfreq())
-        all_stats.append(self.get_status())
-        return all_stats
+        for name, command in self.Get._asdict().iteritems():
+            command()
+        return self.Stat
 
     def close(self):
         self.ser.close()

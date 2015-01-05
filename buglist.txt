@@ -1,2 +1,2 @@
-1 [] add ranges
+1 [x] add ranges depending on the blade
 2 [] add read legth and formating
