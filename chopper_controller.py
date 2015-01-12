@@ -92,7 +92,7 @@ class CHOPPER(object):
         self._log_write(command)
         self.ser.write(command)
         self.ser.read(15)
-        rlvalue = self.get_intfreq()
+        rlvalue = self.get_blade()
         return rlvalue
 
     def get_ref(self):
