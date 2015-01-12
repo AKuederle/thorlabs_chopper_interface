@@ -20,7 +20,7 @@ class CHOPPER(object):
     _bladerange = namedtuple("bladerange", _blades)
 
 
-    def __init__(self, port=3, log=False):
+    def __init__(self, port=3, log=False, getall=True):
         import serial
         super(CHOPPER, self).__init__()
         self.ser = serial.Serial(port)
@@ -41,7 +41,8 @@ class CHOPPER(object):
         self.Set = self._control(intfreq=self.set_intfreq, blade=self.set_blade, ref=self.set_ref)
         self.Get = self._query(status=self.get_status, intfreq=self.get_intfreq, exfreq=self.get_exfreq, blade=self.get_blade, ref=self.get_ref, all=self.get_all)
         self.Stat = self._state(status=None, intfreq=None, exfreq=None, blade=None, ref=None)
-        self.Get.all()
+        if getall = True:
+            self.Get.all()
 
     def _log_write(self, string):
         if self.log is True:
@@ -122,6 +123,7 @@ class CHOPPER(object):
         self._log_write(command)
         self.ser.write(command)
         answer = self.ser.read(15)
+        self._log_write(answer)
         rlvalue = float(answer[len(command):-3])
         self.Stat = self.Stat._replace(status=rlvalue)
         return rlvalue
@@ -132,6 +134,7 @@ class CHOPPER(object):
         self._log_write(command)
         self.ser.write(command)
         answer = self.ser.read(15)
+        self._log_write(answer)
         rlvalue = float(answer[len(command):-3])
         self.Stat = self.Stat._replace(exfreq=rlvalue)
         return rlvalue
@@ -150,7 +153,6 @@ class CHOPPER(object):
 
     def get_all(self):
         for command in self.Get[:-1]:
-            print command
             command()
         return self.Stat
 
