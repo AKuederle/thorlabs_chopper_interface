@@ -1,15 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
-class RangeError(Exception):
-
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
 class CHOPPER(object):
     """docstring for CHOPPER"""
     from collections import namedtuple
@@ -76,7 +66,7 @@ class CHOPPER(object):
     def set_intfreq(self, value):
         "set the internal frequency"
         if float(value) < self._Range.intfreq[0] or float(value) > self._Range.intfreq[1]:
-            raise RangeError("{} is out of range!".format(str(value)))
+            raise ValueError("{} is out of range!".format(str(value)))
         command = "freq={}\r".format(str(value))
         self._log_write(command, mode="write")
         self.ser.write(command)
@@ -99,7 +89,7 @@ class CHOPPER(object):
     def set_blade(self, value, ):
         "set the blade type"
         if float(value) < self._Range.blade[0] or float(value) > self._Range.blade[1]:
-            raise RangeError("{} is out of range!".format(str(value)))
+            raise ValueError("{} is out of range!".format(str(value)))
         command = "blade={}\r".format(str(int(value)))
         self._log_write(command, mode="write")
         self.ser.write(command)
@@ -120,7 +110,7 @@ class CHOPPER(object):
 
     def set_ref(self, value):
         if float(value) < self._Range.ref[0] or float(value) > self._Range.ref[1]:
-            raise RangeError("{} is out of range!".format(str(value)))
+            raise ValueError("{} is out of range!".format(str(value)))
         "set the reference mode"
         command = "ref={}\r".format(str(int(value)))
         self._log_write(command, mode="write")
