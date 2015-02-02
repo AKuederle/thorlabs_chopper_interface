@@ -43,19 +43,32 @@ class CHOPPER(object):
         self.Stat = self._state(status=None, intfreq=None, exfreq=None, blade=None, ref=None)
         self.Get.all()
 
-    def _log_write(self, string):
+    def _log_write(self, string, mode):
+        from datetime import datetime
+        string = str(string)
+        date = str(datetime.now()).split('.')[0]
         if self.log is True:
-            self.log_file.append(str(string))
+            if mode == "read":
+                msg = "<<< " + string
+            elif mode == "write":
+                msg = ">>> " + string
+            self.log_file.append((msg, date))
         else:
             pass
+
+    def save_log(self, file):
+        with open(file, "a") as f:
+            for line in self.log_file:
+                f.write("[{}] {}".format(line[0], line[1]))
+        self.log_file = []
 
     def get_intfreq(self):
         "get the current internal frequency"
         command = "freq?\r"
-        self._log_write(command)
+        self._log_write(command, mode="write")
         self.ser.write(command)
         answer = self.ser.read(15)  # adjust!
-        self._log_write(answer)
+        self._log_write(answer, mode="read")
         rlvalue = float(answer[len(command):-3])
         self.Stat = self.Stat._replace(intfreq=rlvalue)
         return rlvalue
@@ -65,7 +78,7 @@ class CHOPPER(object):
         if float(value) < self._Range.intfreq[0] or float(value) > self._Range.intfreq[1]:
             raise RangeError("{} is out of range!".format(str(value)))
         command = "freq={}\r".format(str(value))
-        self._log_write(command)
+        self._log_write(command, mode="write")
         self.ser.write(command)
         self.ser.read(15)
         rlvalue = self.get_intfreq()
@@ -74,10 +87,10 @@ class CHOPPER(object):
     def get_blade(self):
         "get the current blade type"
         command = "blade?\r"
-        self._log_write(command)
+        self._log_write(command, mode="write")
         self.ser.write(command)
         answer = self.ser.read(15)  # adjust!
-        self._log_write(answer)
+        self._log_write(answer, mode="read")
         rlvalue = float(answer[len(command):-3])
         self.Stat = self.Stat._replace(blade=rlvalue)
         self._Range = self._Range._replace(intfreq=self._Bladerange[int(rlvalue)])
@@ -88,7 +101,7 @@ class CHOPPER(object):
         if float(value) < self._Range.blade[0] or float(value) > self._Range.blade[1]:
             raise RangeError("{} is out of range!".format(str(value)))
         command = "blade={}\r".format(str(int(value)))
-        self._log_write(command)
+        self._log_write(command, mode="write")
         self.ser.write(command)
         self.ser.read(15)
         rlvalue = self.get_intfreq()
@@ -97,10 +110,10 @@ class CHOPPER(object):
     def get_ref(self):
         "get the current reference mode"
         command = "ref?\r"
-        self._log_write(command)
+        self._log_write(command, mode="write")
         self.ser.write(command)
         answer = self.ser.read(15)  # adjust!
-        self._log_write(answer)
+        self._log_write(answer, mode="read")
         rlvalue = float(answer[len(command):-3])
         self.Stat = self.Stat._replace(ref=rlvalue)
         return rlvalue
@@ -110,7 +123,7 @@ class CHOPPER(object):
             raise RangeError("{} is out of range!".format(str(value)))
         "set the reference mode"
         command = "ref={}\r".format(str(int(value)))
-        self._log_write(command)
+        self._log_write(command, mode="write")
         self.ser.write(command)
         self.ser.read(15)
         rlvalue = self.get_ref()
@@ -119,10 +132,10 @@ class CHOPPER(object):
     def get_status(self):
         "get current status (still or running)"
         command = "enable?\r"
-        self._log_write(command)
+        self._log_write(command, mode="write")
         self.ser.write(command)
         answer = self.ser.read(15)
-        self._log_write(answer)
+        self._log_write(answer, mode="read")
         rlvalue = float(answer[len(command):-3])
         self.Stat = self.Stat._replace(status=rlvalue)
         return rlvalue
@@ -130,10 +143,10 @@ class CHOPPER(object):
     def get_exfreq(self):
         "get current external frequency"
         command = "input?\r"
-        self._log_write(command)
+        self._log_write(command, mode="write")
         self.ser.write(command)
         answer = self.ser.read(15)
-        self._log_write(answer)
+        self._log_write(answer, mode="read")
         rlvalue = float(answer[len(command):-3])
         self.Stat = self.Stat._replace(exfreq=rlvalue)
         return rlvalue
@@ -141,13 +154,13 @@ class CHOPPER(object):
     def start(self):
         "send start signal"
         command = "enable=1\r"
-        self._log_write(command)
+        self._log_write(command, mode="write")
         self.ser.write(command)
 
     def stop(self):
         "send stop signal"
         command = "enable=0\r"
-        self._log_write(command)
+        self._log_write(command, mode="write")
         self.ser.write(command)
 
     def get_all(self):
