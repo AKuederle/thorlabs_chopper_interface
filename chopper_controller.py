@@ -1,7 +1,100 @@
-# -*- coding: utf-8 -*-
+"""chopper_controller.py provides a easy to use command line interface to control a Thorlabs optical chopper.
+
+chopper_controller.py
+=================
+
+Provides:
+1. A simple wrapper class for a a selection of USB\serial port commands to control a Thorlabs optical chopper.
+
+The documentation of the Chopper's USB\serial interface can be found in its manual 
+(Available with the product or at http://www.thorlabs.de/thorcat/18400/MC2000-Manual.pdf).
+"""
+__author__ = "Arne Küderle"
+__copyright__ = "Copyright 2015, Arne Küderle"
+__version__ = "1.0"
+__maintainer__ = "Arne Küderle"
+__email__ = "a.kuederle@gmail.com"
 
 class CHOPPER(object):
-    """docstring for CHOPPER"""
+
+    """Simple python wrapper class for a selection of USB\serial port commands to control a Thorlabs optical chopper.
+
+    The class contains multiple functions to get and set the most commonly used chopper parameters. This is either done by calling the
+    the functions itself (name-schema: get_*parameter* or set_*parameter*) or by using the provided namedtuples Set or Get (note the capitalisation), which are
+    container for these functions.
+
+    Usage example
+    =============
+
+        >>> import chopper_controller # makes the CHOPPER() class available in the current python session or script (make sure chopper_controller.py is in the working directory or the path)
+        >>> chopper = CHOPPER() # establish the connection to the Chopper
+
+        # Set and get using the direct function calls
+        >>> print chopper.get_intefreq() # gets the current internal frequency and prints it out
+        >>> chopper.set_intefreq(63) # sets the internal frequency to 63 Hz
+
+        # Set and get using the namedtuple container
+        >>> print chopper.Get.intefreq() # gets the current internal frequency and prints it out
+        >>> chopper.Set.intefreq(63) # sets the internal frequency to 63 Hz
+
+
+    Available functions
+    ==========================
+    The following list contains all parameter which can be used in combination with the set and get functions. For more detailed description
+    of each parameter check the respective docstrings of the related functions or consult the chopper manual.
+
+    Name    : Description                                        # available modes
+    ==============================================================================
+    intfreq : Internal reference frequency                       # get/set
+    blade   : Selected blade (changes the allowed intfreq range) # get/set
+    ref     : reference mode (internal or external)              # get/set
+    status  : still or running                                   # get
+    exfreq  : frequency of the external reference                # get
+
+    Further functionality, which can not be described by setting or getting a parameter can be accessed by using the following functions.
+
+    Name  : Description
+    ========================
+    start : starts the chopper
+    stop  : stops the chopper
+    close : closes the communication port
+
+    Implementation details
+    ======================
+    General interface
+    Despite the fact, that the chopper is connected via USB with the PC, it can be controlled using the serial package. This possible, because 
+    the Chopper has a integrated USB to Serial converter and it's interface is therefore recognised as serial by the OS
+
+    Set-function
+    Before a command is send to the Chopper, it is checked, if the given value is valid for the respective parameter. This is done using the range
+    information stored in the _Range namedtuple, which contains the upper and the lower limit for each parameter. (The allowed range for the internal
+    frequency changes depended on the selected blade). A Set-function then sends the given parameter to the chopper.
+    Right after this command the corresponding Get-function is called to check if the chopper has successfully set the parameter to its new value.
+    The new value is returned to the user.
+
+    Get-function
+    The Get functions simply send a query to the chopper. The chopper than returns the value of the queried parameter. Since the returned answer contains additional characters beside the poor value
+    the answer string is cut respectively and converted in an integer or float format depending of the parameter. Beside returning the value, the value is also written to the Stat tuple.
+
+    Stat-tuple
+    The Stat namedtuple contains all current known parameter values of the chopper. Please note, that this values might not reflected the real chopper state, since the values of the tuple are only updated,
+    if the respective value is queried from the chopper by one of the provided Get functions. To refresh all parameter values the get_all() function can be used.
+
+    Logging
+    To log and debug the chopper communication, all traffic between this controller and the chopper can be recorded. To activate logging, the log parameter has to be set to True. This can
+    be done on initialising of the connection or later on in the session.
+
+        # on initialisation
+        >>> chopper = CHOPPER(log=True)
+
+        # later on
+        >>> chopper = CHOPPER()
+        >>> chopper.log = True
+
+    If logging is enabled, all strings, send to or received from the chopper, are stored (with respective formatting for incoming and outgoing communication) as a new element of the log_file list variable.
+    To save all logs of session to a file the save_log() function can be used. Please note, that this will clear the log_file variable after saving.
+    """
+
     from collections import namedtuple
     _blades = ["MC1F2", "MC1F6", "MC1F10", "MC1F15", "MC1F30", "MC1F60", "MC1F100", "MC1F57"]
     _control = namedtuple("control", ["intfreq", "blade", "ref"])
