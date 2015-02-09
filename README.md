@@ -10,7 +10,7 @@ The documentation of the Chopper's USB\serial interface can be found in its manu
 
 ### Usage
 The chopper_controller.py includes a CHOPPER class. It can be used in an interactive Python shell or in a arbitrary python script by importing the module and creating an instance of the class.
-The provided functions (see class docstring) can than be used to control the laser.
+The provided functions (see class docstring) can than be used to control the chopper.
 
 #### Example
 
