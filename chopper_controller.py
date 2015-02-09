@@ -1,4 +1,4 @@
-"""chopper_controller.py provides a easy to use command line interface to control a Thorlabs optical chopper.
+r"""chopper_controller.py provides a easy to use command line interface to control a Thorlabs optical chopper.
 
 chopper_controller.py
 =================
@@ -17,7 +17,7 @@ __email__ = "a.kuederle@gmail.com"
 
 class CHOPPER(object):
 
-    """Simple python wrapper class for a selection of USB\serial port commands to control a Thorlabs optical chopper.
+    r"""Simple python wrapper class for a selection of USB\serial port commands to control a Thorlabs optical chopper.
 
     The class contains multiple functions to get and set the most commonly used chopper parameters. This is either done by calling the
     the functions itself (name-schema: get_*parameter* or set_*parameter*) or by using the provided namedtuples Set or Get (note the capitalisation), which are
